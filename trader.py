@@ -6,10 +6,11 @@ import alpha_vantage
 import matplotlib.pyplot as plt
 from calendar import monthrange
 from newsapi import NewsApiClient
+from joblib import dump, load
+import numpy as np
 import json
 
-symbol = 'IBM'
-minutesAfter = 30
+symbol = 'F'
 
 inputs = []
 outputs = []
@@ -26,6 +27,7 @@ dateYear = (date-timedelta(weeks=52)).strftime('%Y-%m-%d')
 dateMonth = (date-timedelta(weeks=4)).strftime('%Y-%m-%d')
 monthAgoPrice = dataFull[dateMonth]['4. close']
 yearAgoPrice = dataFull[dateYear]['4. close']
+
 
 #Get News Articles
 datelist = []
@@ -46,13 +48,7 @@ recentArticleDate = (datetime.datetime.strptime(recentArticle['publishedAt'], '%
 
 #Calculate Change
 atDate = float(data[date.strftime('%Y-%m-%d %H:%M:00')]['4. close'])
-afterDate = float(data[(date+timedelta(minutes=minutesAfter)).strftime('%Y-%m-%d %H:%M:00')]['4. close'])
 volume = data[date.strftime('%Y-%m-%d %H:%M:00')]['5. volume']
-pandl = ((afterDate-atDate)/afterDate)*100
-output = pandl
-print(volume)
-out = "P/L for {} - {}, range {}min = {}%".format(symbol, date, minutesAfter, pandl)
-print(out)
 
 #Add Data
 #inputs.append(recentArticleTitle)
@@ -86,16 +82,18 @@ def append_to_json(_dict,path):
             f.write(json.dumps(_dict).encode())    #Dump the dictionary
             f.write(']'.encode())
 
-append_to_json(inputs, 'inputs.json')
-append_to_json(output, 'outputs.json')
-#features = [[-3.6, 15.4, 0, 39, 0, -8], [-0.5, 13.8, 0, 52, 0, -7], [-15.8, 0, 0, 43, 0, -8], [-13.7, 0, 0, 37, 0, -7]]
 
-#labels = [-5, 4, 7, -1]
+clf = load('model.joblib') 
 
-#clf = tree.DecisionTreeClassifier()
-#clf = clf.fit(features, labels)
+inputs = inputs[:+(260-len(inputs))]
 
-#prediction = clf.predict([[avgtemp, snow, rain, maxwind, high, low]])
+prediction = clf.predict([inputs])
 
 #result
-#print(prediction)
+print(prediction)
+
+def test():
+    afterDate = float(data[(date+timedelta(minutes=30)).strftime('%Y-%m-%d %H:%M:00')]['4. close'])
+    print(((afterDate-atDate)/afterDate)*100)
+
+test()
